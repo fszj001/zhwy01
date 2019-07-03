@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:task="http://www.springframework.org/schema/task"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task.xsd">
+
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+    <context:annotation-config/>
+    <mvc:annotation-driven/> 
+    <task:annotation-driven />
+	<context:component-scan base-package="com.fszj"/>
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	    <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+	    <property name="prefix" value="/WEB-INF/jsp/"/>
+	    <property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<!-- 数据源  -->
+      <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+    <property name="driverClass" value="${jdbc.driverClassName}"/>
+    <property name="jdbcUrl" value="${jdbc.url}"/>
+    <property name="user" value="${jdbc.username}"/>
+    <property name="password" value="${jdbc.password}"/>
+    <property name="maxPoolSize" value="100"/>
+</bean>
+
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+ <!-- spring mybatis配置 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+    	<property name="configLocation" value="classpath:mybatis.xml"></property>
+        <property name="mapperLocations" value="classpath*:mapper/*.xml" />
+  		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	
+	<!--4 自动扫描对象关系映射 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--指定会话工厂，如果当前上下文中只定义了一个则该属性可省去 -->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+        <!-- 指定要自动扫描接口的基础包，实现接口 -->
+        <property name="basePackage" value="com.fszj.dao"></property>
+    </bean>
+
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	 	<property name="maxUploadSize" value="10485760" /> 
+	</bean>
+ 
+ 
+ 	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		  <property name="dataSource" ref="dataSource" />
+	</bean>
+	<bean id="loginInterceptorHandler1" class="com.fszj.inteceptor.LoginInterceptorHandler1"></bean>
+	<bean id="uploadInterceptorHandler" class="com.fszj.inteceptor.UploadInterceptorHandler"></bean>
+	<aop:config >
+	     <aop:advisor advice-ref="tx-advice" pointcut="execution(public * com.fszj.service..*.*(..))"   />  
+	</aop:config>
+	<tx:advice id="tx-advice" transaction-manager="transactionManager">
+		    <tx:attributes>
+		        <tx:method name="*" propagation="REQUIRED"/>
+		    </tx:attributes>
+	</tx:advice> 
+	<!-- 配置用于session验证的拦截器 -->
+    <!-- 
+        如果有多个拦截器满足拦截处理的要求，则依据配置的先后顺序来执行
+     -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <!-- 拦截所有的请求，这个必须写在前面，也就是写在【不拦截】的上面 -->
+            <mvc:mapping path="/**" />
+            <!-- 但是排除下面这些，也就是不拦截请求 -->
+            <mvc:exclude-mapping path="/login.jsp" />
+            <mvc:exclude-mapping path="/login.do" />
+            <mvc:exclude-mapping path="/regist.do" />
+            <ref bean="loginInterceptorHandler1"/>
+        </mvc:interceptor>
+        
+        <mvc:interceptor>
+        		<mvc:mapping path="/upload*"/>
+        		<ref bean="uploadInterceptorHandler"/>
+        </mvc:interceptor>
+        
+    </mvc:interceptors>
+	
+</beans>

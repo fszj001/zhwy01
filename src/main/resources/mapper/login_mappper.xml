@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fszj.dao.system.LoginDao">
+
+
+  <select id="getUser" resultType="User">
+    select * from users where uid = #{uid}
+  </select>
+  
+  <select id="check" parameterType="User" resultType="User">
+  	select * from users where userName=#{userName} and  userPass=#{userPass}
+  </select>
+  
+  <select id="userList"   resultType="map">
+  		select u.*,r.roleName from Users u
+  		left join role r on r.roleid=u.roleid
+  		 where 1=1 
+  		<if test="userName!=null  and userName!=''">
+  			 and u.userName LIKE CONCAT('%',#{userName},'%') 
+  		</if>
+  		 limit #{start} , #{end}
+  </select>
+  
+   <select id="userCount"  resultType="int">
+  		select count(1) from Users where 1=1  
+  		<if test="userName!=null  and userName!=''">
+  			 and userName LIKE CONCAT('%',#{userName},'%') 
+  		</if>
+  </select>
+  
+  
+  <select id="roleList"   resultType="map">
+  		select * from role where 1=1 
+  		<if test="roleName!=null  and roleName!=''">
+  			and roleName LIKE CONCAT('%',#{roleName},'%') 
+  		</if>
+  		 limit #{start} , #{end}
+  </select>
+  
+   <select id="roleCount"  resultType="int">
+  		select count(1) from role where 1=1  
+  		<if test="roleName!=null  and roleName!=''">
+  			and roleName LIKE CONCAT('%',#{roleName},'%') 
+  		</if>
+  </select>
+  
+  <insert id="roleAdd" parameterType="Role">
+  	 insert into role(roleid,roleName,rk) values(#{roleid},#{roleName},#{rk})
+  </insert>
+  
+  <select id="getRole" resultType="Role">
+  	select * from role where roleid=#{roleid}
+  </select>
+  
+  <update id="roleEdit" parameterType="Role">
+  	update  role set roleName=#{roleName},rk = #{rk} where roleid=#{roleid}
+  </update>
+  
+  
+  <select id="getRoleAll" resultType="Role">
+  	select roleid,roleName from role 
+  </select>
+  
+   <insert id="userAdd" parameterType="User">
+  	 insert into users(uid,userName,userPass,createTime,roleid,Name,classId) 
+  	 values(#{uid},#{userName},#{userPass},#{createTime},#{roleid},#{Name},#{classId})
+  </insert>
+  
+  <delete id="userDel" parameterType="User">
+  	 delete from users where uid=#{uid}
+  </delete>
+  
+  <update id="userEdit" parameterType="User">
+  	 update users set userName=#{userName},userPass=#{userPass} ,roleid=#{roleid},
+  	 createTime=#{createTime} ,Name=#{Name} ,classId=#{classId} where uid=#{uid}
+  </update>
+  
+  
+  <delete id="roleDel" parameterType="Role">
+  	 delete from role where roleid=#{roleid}
+  </delete>
+   
+   <update id="update">
+   		update users set userPass=#{userPass} where uid=#{uid}
+   </update>
+   
+
+</mapper>
